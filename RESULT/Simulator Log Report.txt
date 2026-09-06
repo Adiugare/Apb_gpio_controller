@@ -1,0 +1,39 @@
+ISim log file
+Running: /home/aditya/git_test/apb_gpio/sim/apb_gpio/apb_gpio_tb_isim_beh.exe -intstyle ise -gui -tclbatch isim.cmd -wdb /home/aditya/git_test/apb_gpio/sim/apb_gpio/apb_gpio_tb_isim_beh.wdb 
+ISim P.20131013 (signature 0xfbc00daa)
+WARNING: A WEBPACK license was found.
+WARNING: Please use Xilinx License Configuration Manager to check out a full ISim license.
+WARNING: ISim will run in Lite mode. Please refer to the ISim documentation for more information on the differences between the Lite and the Full version.
+This is a Lite version of ISim.
+Time resolution is 1 ps
+# onerror resume
+# wave add /
+# run 1000 ns
+Simulator is doing circuit initialization process.
+Finished circuit initialization process.
+[PASS]T1 RESET DATA : got = 0x00000000 exp = 0x00000000
+[PASS]T1 RESET DIR : got = 0x00000000 exp = 0x00000000
+[PASS]T1 RESET gpio_irq: got=0 exp=0
+[PASS]T2 DATA READBACK : got = 0xa5a5a5a5 exp = 0xa5a5a5a5
+[PASS]T2 gpio_out mirror DATA : got = 0xa5a5a5a5 exp = 0xa5a5a5a5
+[PASS]T3 DIR READBACK : got = 0xffff0000 exp = 0xffff0000
+[PASS]T3 GPIO_OE mirror DIR : got = 0xffff0000 exp = 0xffff0000
+[PASS]T4 SET LOW BYTE : got = 0x000000ff exp = 0x000000ff
+[PASS]T4 CLR NIBBLE : got = 0x000000f0 exp = 0x000000f0
+[PASS]T4 TOGGLE TO ZERO : got = 0x00000000 exp = 0x00000000
+[PASS]T5 INT_EN READBACK : got = 0x00000001 exp = 0x00000001
+[PASS]T5 INT_TYPE READBACK : got = 0x00000000 exp = 0x00000000
+[PASS]T6 LEVEL INT STATUS SET: got=1 exp=1
+[PASS]T6 gpio_irq ASSERTED: got=1 exp=1
+[PASS]T6 LEVEL INT STATUS SET: got=1 exp=1
+[PASS]T6 gpio_irq ASSERTED: got=1 exp=1
+[PASS]T6 LEVEL INT STATUS SET: got=1 exp=1
+[PASS]T6 gpio_irq ASSERTED: got=1 exp=1
+[PASS]T6 LEVEL INT CLEARED: got=0 exp=0
+[PASS]T6 gpio_irq DEASSERTED: got=0 exp=0
+[PASS]T6 LEVEL INT CLEARED: got=0 exp=0
+[PASS]T6 gpio_irq DEASSERTED: got=0 exp=0
+[PASS]T6 LEVEL INT CLEARED: got=0 exp=0
+[PASS]T6 gpio_irq DEASSERTED: got=0 exp=0
+[PASS]T7 EDGE INT STATUS SET: got=1 exp=1
+[PASS]T7 EDGE INT STATUS SET: got=1 exp=1

@@ -1,0 +1,550 @@
+# APB GPIO Controller Design Document
+
+1. Project Title
+
+APB GPIO Controller
+
+2. Design Overview
+
+The APB GPIO Controller is designed as an APB slave that provides software access to configurable GPIO pins.
+
+The design contains APB address decoding, GPIO control registers, GPIO direction control, SET/CLR/TOGGLE logic, input synchronization, interrupt detection, interrupt status handling, and a combined interrupt output.
+
+The controller supports zero wait-state APB transactions.
+
+3. Top-Level Block Diagram
+
+
+                         +-----------------------------------+
+                         |         APB GPIO CONTROLLER       |
+                         |                                   |
+ PCLK ------------------>|                                   |
+ PRESET_n -------------->|                                   |
+ PSEL ------------------>|                                   |
+ PENABLE --------------->|       APB Interface               |
+ PWRITE ---------------->|                                   |
+ PADDR ----------------->|                                   |
+ PWDATA ---------------->|                                   |
+                         |            |                      |
+ PRDATA <----------------|            v                      |
+ PREADY <----------------|     Address Decoder               |
+ PSLVERR <---------------|            |                      |
+                         |            v                      |
+                         |      Register Control             |
+                         |     +------------------+          |
+                         |     | DATA Register    |---------> gpio_out
+                         |     | DIR Register     |---------> gpio_oe
+                         |     | SET Register     |          |
+                         |     | CLR Register     |          |
+                         |     | TOGGLE Register  |          |
+                         |     | INT_EN Register  |          |
+                         |     | INT_STATUS       |          |
+                         |     | INT_TYPE         |          |
+                         |     +------------------+          |
+                         |                                   |
+ gpio_in --------------->|   2-FF Synchronizer               |
+                         |            |                      |
+                         |            v                      |
+                         |    Edge / Level Detection         |
+                         |            |                      |
+                         |            v                      |
+                         |      Interrupt Logic              |
+                         |            |                      |
+                         +------------|----------------------+
+                                      |
+                                      v
+                                   gpio_irq
+
+
+4. Module Parameters
+
+| Parameter  | Default Value | Description         |
+| ---------- | ------------: | ------------------- |
+| GPIO_WIDTH |            32 | Number of GPIO pins |
+| ADDR_WIDTH |             8 | APB address width   |
+| DATA_WIDTH |            32 | APB data width      |
+
+5. Interface Description
+
+APB Interface
+
+| Signal   | Direction | Description         |
+| -------- | --------- | ------------------- |
+| PCLK     | Input     | APB clock           |
+| PRESET_n | Input     | Active-low reset    |
+| PSEL     | Input     | Slave select        |
+| PENABLE  | Input     | Access phase enable |
+| PWRITE   | Input     | Write/read control  |
+| PADDR    | Input     | Register address    |
+| PWDATA   | Input     | Write data          |
+| PRDATA   | Output    | Read data           |
+| PREADY   | Output    | Slave ready         |
+| PSLVERR  | Output    | Slave error         |
+
+GPIO Interface
+
+| Signal   | Direction | Description         |
+| -------- | --------- | ------------------- |
+| gpio_in  | Input     | External GPIO input |
+| gpio_out | Output    | GPIO output data    |
+| gpio_oe  | Output    | GPIO output enable  |
+| gpio_irq | Output    | Combined interrupt  |
+
+6. Register Architecture
+
+The design contains five internal registers.
+
+| Register        | Function                        |
+| --------------- | ------------------------------- |
+| gpio_data       | Stores GPIO output data         |
+| gpio_dir        | Controls GPIO direction         |
+| gpio_int_en     | Enables GPIO interrupts         |
+| gpio_int_status | Stores interrupt status         |
+| gpio_int_type   | Selects edge or level interrupt |
+
+The SET, CLR and TOGGLE registers are implemented as write operations on the gpio_data register and do not require separate storage registers.
+
+7. Register Address Map
+
+| Address | Register   | Operation                 |
+| ------- | ---------- | ------------------------- |
+| 0x00    | DATA       | Read/write GPIO data      |
+| 0x04    | DIR        | Read/write GPIO direction |
+| 0x08    | SET        | Set selected GPIO bits    |
+| 0x0C    | CLR        | Clear selected GPIO bits  |
+| 0x10    | TOGGLE     | Toggle selected GPIO bits |
+| 0x14    | INT_EN     | Enable interrupts         |
+| 0x18    | INT_STATUS | Read/clear interrupts     |
+| 0x1C    | INT_TYPE   | Select interrupt type     |
+
+8. APB Interface Design
+
+The APB interface uses two phases.
+
+### Setup Phase
+
+During the setup phase:
+
+PSEL = 1
+
+PENABLE = 0
+
+The address and control signals are placed on the APB bus.
+
+### Access Phase
+
+During the access phase:
+
+PSEL = 1
+
+PENABLE = 1
+
+The data transfer occurs during this phase.
+
+The RTL detects the access phase using:
+
+access_phase = PSEL & PENABLE
+
+9. Address Decoder
+
+The address decoder checks two conditions.
+
+### Address Alignment
+
+The address must be word aligned.
+
+PADDR[1:0] = 2'b00
+
+### Valid Register Address
+
+The address must match one of the implemented register addresses.
+
+If either condition fails during an APB access phase, PSLVERR is asserted.
+
+10. APB Read and Write Control
+
+A write operation is generated using:
+
+write_en = access_phase & PWRITE & addr_valid
+
+A read operation is generated using:
+
+read_en = access_phase & ~PWRITE & addr_valid
+
+The write enable signal controls register updates.
+
+The read path uses a combinational read multiplexer.
+
+## 11. GPIO Data Path
+
+The DATA register stores GPIO output values.
+
+The data flow is:
+
+APB Write
+
+↓
+
+gpio_data Register
+
+↓
+
+gpio_out
+
+The GPIO output assignment is:
+
+gpio_out = gpio_data
+
+## 12. GPIO Direction Control
+
+The DIR register controls GPIO direction.
+
+The data flow is:
+
+APB Write
+
+↓
+
+gpio_dir Register
+
+↓
+
+gpio_oe
+
+A direction bit value of 1 enables output mode.
+
+A direction bit value of 0 configures input mode.
+
+13. SET, CLR and TOGGLE Logic
+
+The SET register performs an OR operation.
+
+gpio_data = gpio_data OR wdata_g
+
+The CLR register performs an AND with inverted write data.
+
+gpio_data = gpio_data AND NOT wdata_g
+
+The TOGGLE register performs an XOR operation.
+
+gpio_data = gpio_data XOR wdata_g
+
+These operations allow individual GPIO bits to be modified without changing unrelated bits.
+
+14. GPIO Input Synchronizer
+
+External GPIO signals can be asynchronous to PCLK.
+
+A two flip-flop synchronizer is used.
+
+
+gpio_in
+   |
+   v
++----------+
+| Sync FF1 |
++----------+
+   |
+   v
++----------+
+| Sync FF2 |
++----------+
+   |
+   v
+Synchronized GPIO Input
+
+
+The synchronized GPIO input is used for edge and level interrupt detection.
+
+15. Edge Detection Logic
+
+Edge detection is implemented using XOR.
+
+gpio_edge = gpio_in_sync1 XOR gpio_in_sync2
+
+The XOR output becomes high whenever the GPIO input changes.
+
+This detects:
+
+* Rising edge
+* Falling edge
+
+16. Level Detection Logic
+
+Level detection uses the synchronized GPIO input.
+
+gpio_level = gpio_in_sync2
+
+A logic high level is considered an active level interrupt.
+
+17. Interrupt Architecture
+
+The interrupt path is shown below.
+
+
+                    gpio_in
+                       |
+                       v
+              +----------------+
+              | 2-FF Sync      |
+              +----------------+
+                       |
+                       v
+              +----------------+
+              | Edge Detection |
+              +----------------+
+                       |
+                       +-----------+
+                       |           |
+                       v           v
+                 Edge Mode     Level Mode
+                       |           |
+                       +-----+-----+
+                             |
+                             v
+                     Interrupt Status
+                             |
+                             v
+                      Interrupt Enable
+                             |
+                             v
+                         gpio_irq
+
+
+18. Interrupt Type Selection
+
+The interrupt type register selects the interrupt source.
+
+INT_TYPE = 1 selects edge detection.
+
+INT_TYPE = 0 selects level detection.
+
+The interrupt set condition is:
+
+int_set_bits =
+
+(gpio_int_type AND gpio_edge)
+
+OR
+
+(NOT gpio_int_type AND gpio_level)
+
+19. Interrupt Status Logic
+
+The interrupt status register stores active interrupt events.
+
+For edge interrupts, a detected GPIO transition sets the corresponding status bit.
+
+For level interrupts, an active high GPIO input sets the corresponding status bit.
+
+The interrupt status can be cleared by writing logic 1 to the corresponding bit.
+
+This is called write-1-to-clear operation.
+
+If a clear operation and a new interrupt occur in the same cycle, the new interrupt is given priority.
+
+20. Interrupt Output
+
+The final interrupt output is generated by:
+
+gpio_irq = |(gpio_int_status & gpio_int_en)
+
+The AND operation masks disabled interrupts.
+
+The reduction OR operation generates one interrupt output when any enabled interrupt is active.
+
+21. APB Read MUX
+
+The read multiplexer returns register values based on PADDR.
+
+The following registers are readable:
+
+* DATA
+* DIR
+* INT_EN
+* INT_STATUS
+* INT_TYPE
+
+For SET, CLR and TOGGLE addresses, the read data defaults to zero.
+
+22. Reset Architecture
+
+The design uses an asynchronous active-low reset.
+
+When PRESET_n is low:
+
+* gpio_data is cleared
+* gpio_dir is cleared
+* gpio_int_en is cleared
+* gpio_int_status is cleared
+* gpio_int_type is cleared
+* Synchronizer registers are cleared
+
+After reset, all GPIO pins are configured as inputs and all interrupts are disabled.
+
+23. Verification Architecture
+
+The design is verified using a self-checking Verilog testbench.
+
+The testbench structure is:
+
+
+                +-----------------------+
+                |       Testbench       |
+                |                       |
+                | Clock Generator       |
+                | Reset Control         |
+                | APB Write Task        |
+                | APB Read Task         |
+                | GPIO Stimulus         |
+                | Checker Tasks         |
+                +-----------+-----------+
+                            |
+                            v
+                  +-------------------+
+                  |   APB GPIO DUT    |
+                  +-------------------+
+                            |
+                            v
+                   Output Comparison
+                            |
+                    PASS / FAIL Result
+
+
+24. Test Cases Implemented
+
+### T1: Reset Verification
+
+Checks:
+
+* DATA register reset value
+* DIR register reset value
+* gpio_irq reset value
+
+### T2: DATA Register Verification
+
+Checks:
+
+* DATA write operation
+* DATA read operation
+* gpio_out reflects gpio_data
+
+### T3: DIR Register Verification
+
+Checks:
+
+* DIR write operation
+* DIR read operation
+* gpio_oe reflects gpio_dir
+
+### T4: SET, CLR and TOGGLE Verification
+
+Checks:
+
+* SET operation
+* CLR operation
+* TOGGLE operation
+
+### T5: Interrupt Register Verification
+
+Checks:
+
+* INT_EN write and read
+* INT_TYPE write and read
+
+### T6: Level Interrupt Verification
+
+Checks:
+
+* Level interrupt status generation
+* gpio_irq assertion
+* Interrupt clearing
+* gpio_irq deassertion
+
+### T7: Edge Interrupt Verification
+
+Checks:
+
+* GPIO transition detection
+* Interrupt status generation
+
+### T8: Edge Interrupt Clear Verification
+
+Checks:
+
+* Write-1-to-clear operation
+* gpio_irq deassertion
+
+### T9: Interrupt Masking Verification
+
+Checks:
+
+* Interrupt disable using INT_EN
+* gpio_irq remains low when masked
+
+### T10: Invalid Address Verification
+
+Checks:
+
+* PSLVERR assertion
+* PREADY remains high
+
+### T11: Unaligned Address Verification
+
+Checks:
+
+* PSLVERR assertion for unaligned address
+
+### T12: Valid Address Verification
+
+Checks:
+
+* PSLVERR remains low for valid address
+
+25. Testbench Pass and Fail Mechanism
+
+The testbench uses two counters:
+
+pass_count
+
+fail_count
+
+The check task compares multi-bit outputs.
+
+The check_bits task compares single-bit signals.
+
+For every successful comparison, pass_count is incremented.
+
+For every failed comparison, fail_count is incremented.
+
+At the end of simulation:
+
+fail_count = 0 indicates all tests passed.
+
+fail_count greater than 0 indicates one or more tests failed.
+
+26. Design Summary
+
+The APB GPIO Controller consists of the following major functional blocks:
+
+1. APB Interface
+2. Address Validation
+3. Register Write Logic
+4. Read Multiplexer
+5. GPIO Data Control
+6. GPIO Direction Control
+7. SET, CLR and TOGGLE Logic
+8. Two Flip-Flop Input Synchronizer
+9. Edge Detection
+10. Level Detection
+11. Interrupt Status Logic
+12. Interrupt Enable Logic
+13. Combined Interrupt Generation
+
+27. Conclusion
+
+The APB GPIO Controller has been designed as a parameterized APB slave with configurable GPIO functionality.
+
+The RTL implementation supports GPIO output control, direction configuration, SET, CLR and TOGGLE operations, synchronized GPIO input handling, edge and level interrupt detection, interrupt status management, interrupt masking, and APB error handling.
+
+The design has been verified using a directed self-checking Verilog testbench containing twelve functional test scenarios.

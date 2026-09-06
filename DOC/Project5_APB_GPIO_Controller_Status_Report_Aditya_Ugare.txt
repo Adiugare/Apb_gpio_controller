@@ -1,0 +1,91 @@
+# APB GPIO Controller Status Report
+
+1. Project Name
+
+APB GPIO Controller
+
+2. Project Objective
+
+The objective of this project is to design and verify an APB-based GPIO controller.
+
+The controller allows software to control GPIO pins through memory-mapped registers. The design supports GPIO output control, direction configuration, interrupt generation, and APB error handling.
+
+3. Work Completed
+
+### RTL Design
+
+The following features have been implemented:
+
+| Feature                          | Status    |
+| -------------------------------- | --------- |
+| APB Slave Interface              | Completed |
+| Parameterized GPIO Width         | Completed |
+| DATA Register                    | Completed |
+| DIR Register                     | Completed |
+| SET Register Operation           | Completed |
+| CLR Register Operation           | Completed |
+| TOGGLE Register Operation        | Completed |
+| GPIO Output Control              | Completed |
+| GPIO Direction Control           | Completed |
+| Address Validation               | Completed |
+| Address Alignment Check          | Completed |
+| PREADY Generation                | Completed |
+| PSLVERR Generation               | Completed |
+| Two Flip-Flop Input Synchronizer | Completed |
+| Edge Detection                   | Completed |
+| Level Detection                  | Completed |
+| Interrupt Enable                 | Completed |
+| Interrupt Status                 | Completed |
+| Interrupt Type Selection         | Completed |
+| Write-1-to-Clear Interrupt       | Completed |
+| GPIO Interrupt Output            | Completed |
+
+4. Verification Work Completed
+
+A self-checking Verilog testbench has been developed.
+
+The testbench includes:
+
+* Clock generation
+* Reset generation
+* APB write task
+* APB read task
+* APB idle task
+* Data comparison task
+* Single-bit comparison task
+* Pass counter
+* Fail counter
+
+5. Test Cases Implemented
+
+| Test ID | Test Description                    | Status    |
+| ------- | ----------------------------------- | --------- |
+| T1      | Reset Verification                  | Completed |
+| T2      | DATA Register and GPIO Output       | Completed |
+| T3      | DIR Register and GPIO Output Enable | Completed |
+| T4      | SET, CLR and TOGGLE Operations      | Completed |
+| T5      | Interrupt Register Read/Write       | Completed |
+| T6      | Level Triggered Interrupt           | Completed |
+| T7      | Edge Triggered Interrupt            | Completed |
+| T8      | Interrupt Clear Operation           | Completed |
+| T9      | Interrupt Masking                   | Completed |
+| T10     | Invalid Address Error               | Completed |
+| T11     | Unaligned Address Error             | Completed |
+| T12     | Valid Address Without Error         | Completed |
+
+6. Current Status
+
+The RTL design and directed functional testbench have been completed.
+
+The implemented design covers the main GPIO functionality, APB register access, GPIO control operations, interrupt handling, and APB error conditions.
+
+The testbench provides automated checking using pass and fail counters.
+
+
+7. Conclusion
+
+The APB GPIO Controller project has successfully completed the RTL design and basic functional verification stages.
+
+The project includes a parameterized APB GPIO controller and a self-checking Verilog testbench with twelve directed test cases. The design verifies GPIO data control, direction control, SET/CLR/TOGGLE operations, interrupt functionality, and APB error handling.
+
+Current Project Status: RTL Design and Directed Functional Verification Completed

@@ -1,0 +1,212 @@
+# APB GPIO Controller Requirements Specification
+
+1. Project Title
+
+APB GPIO Controller
+
+2. Project Overview
+
+The project is to design and verify a parameterized GPIO controller compatible with the APB interface.
+
+The GPIO controller shall allow software to configure and control General Purpose Input/Output pins through memory-mapped registers. The controller shall support GPIO output control, direction configuration, bit manipulation operations, GPIO input synchronization, interrupt generation, and APB error handling.
+
+3. Functional Requirements
+
+3.1 APB Interface
+
+The controller shall operate as an APB slave.
+
+The design shall support the following APB signals:
+
+| Signal   | Direction | Description                |
+| -------- | --------- | -------------------------- |
+| PCLK     | Input     | APB clock                  |
+| PRESET_n | Input     | Active-low reset           |
+| PSEL     | Input     | APB slave select           |
+| PENABLE  | Input     | APB access phase indicator |
+| PWRITE   | Input     | Read/write control         |
+| PADDR    | Input     | Register address           |
+| PWDATA   | Input     | Write data                 |
+| PRDATA   | Output    | Read data                  |
+| PREADY   | Output    | Slave ready signal         |
+| PSLVERR  | Output    | Slave error signal         |
+
+The APB transaction shall use setup and access phases.
+
+The design shall support zero wait-state transactions.
+
+PREADY shall remain high during operation.
+
+3.2 Parameterization
+
+The controller shall support configurable parameters.
+
+| Parameter  | Description              |
+| ---------- | ------------------------ |
+| GPIO_WIDTH | Number of GPIO pins      |
+| ADDR_WIDTH | Width of APB address bus |
+| DATA_WIDTH | Width of APB data bus    |
+
+The default configuration shall use 32 GPIO pins, an 8-bit address bus, and a 32-bit data bus.
+
+3.3 GPIO Direction Control
+
+Each GPIO pin shall support input or output configuration.
+
+A direction bit value of 0 shall configure the corresponding GPIO pin as an input.
+
+A direction bit value of 1 shall configure the corresponding GPIO pin as an output.
+
+The GPIO output enable signal shall reflect the GPIO direction register.
+
+3.4 GPIO Output Data Control
+
+The controller shall provide a DATA register to store GPIO output values.
+
+The stored output data shall be available on gpio_out.
+
+3.5 GPIO SET Operation
+
+The controller shall provide a SET register.
+
+Writing a logic 1 to a bit position shall set the corresponding GPIO output bit.
+
+Writing a logic 0 shall not affect the corresponding GPIO output bit.
+
+3.6 GPIO CLR Operation
+
+The controller shall provide a CLR register.
+
+Writing a logic 1 to a bit position shall clear the corresponding GPIO output bit.
+
+Writing a logic 0 shall not affect the corresponding GPIO output bit.
+
+3.7 GPIO TOGGLE Operation
+
+The controller shall provide a TOGGLE register.
+
+Writing a logic 1 to a bit position shall toggle the corresponding GPIO output bit.
+
+Writing a logic 0 shall not affect the corresponding GPIO output bit.
+
+3.8 GPIO Input Synchronization
+
+External GPIO inputs may be asynchronous with respect to PCLK.
+
+The design shall synchronize GPIO inputs using a two flip-flop synchronizer.
+
+The synchronized GPIO input shall be used for interrupt detection.
+
+3.9 Interrupt Support
+
+The controller shall support interrupts for each GPIO pin.
+
+The controller shall provide:
+
+* Interrupt enable control
+* Interrupt status storage
+* Edge-triggered interrupt detection
+* Level-triggered interrupt detection
+* Combined interrupt output
+
+3.10 Interrupt Type
+
+The controller shall support two interrupt types.
+
+| INT_TYPE Bit | Interrupt Mode  |
+| ------------ | --------------- |
+| 0            | Level-triggered |
+| 1            | Edge-triggered  |
+
+The edge-triggered mode shall detect both rising and falling transitions.
+
+The level-triggered mode shall treat a logic high input as an active interrupt condition.
+
+3.11 Interrupt Status
+
+The controller shall provide an interrupt status register.
+
+An interrupt event shall set the corresponding status bit.
+
+Software shall clear an interrupt status bit by writing logic 1 to the corresponding bit.
+
+If a new interrupt occurs during the same cycle as a software clear operation, the new interrupt shall have priority.
+
+3.12 Interrupt Enable
+
+The controller shall provide individual interrupt enable bits.
+
+An interrupt shall affect the final gpio_irq output only when the corresponding interrupt enable bit is set.
+
+3.13 Interrupt Output
+
+The controller shall provide a single combined interrupt output.
+
+gpio_irq shall be asserted when one or more enabled GPIO interrupt status bits are active.
+
+3.14 Address Validation
+
+The controller shall validate APB addresses.
+
+The address shall be word aligned.
+
+The address shall match one of the supported register addresses.
+
+An invalid or unaligned address accessed during the APB access phase shall assert PSLVERR.
+
+4. Register Address Map
+
+| Address | Register   | Access     | Description      |
+| ------- | ---------- | ---------- | ---------------- |
+| 0x00    | DATA       | Read/Write | GPIO output data |
+| 0x04    | DIR        | Read/Write | GPIO direction   |
+| 0x08    | SET        | Write      | Set GPIO bits    |
+| 0x0C    | CLR        | Write      | Clear GPIO bits  |
+| 0x10    | TOGGLE     | Write      | Toggle GPIO bits |
+| 0x14    | INT_EN     | Read/Write | Interrupt enable |
+| 0x18    | INT_STATUS | Read/Write | Interrupt status |
+| 0x1C    | INT_TYPE   | Read/Write | Interrupt type   |
+
+5. Reset Requirements
+
+When PRESET_n is asserted low:
+
+* GPIO output data shall be cleared
+* GPIO direction shall be cleared
+* All GPIO pins shall default to input mode
+* Interrupt enable bits shall be cleared
+* Interrupt status bits shall be cleared
+* Interrupt type bits shall be cleared
+* Synchronizer registers shall be cleared
+* gpio_irq shall be low
+
+6. Verification Requirements
+
+The design shall be verified for the following functionality:
+
+* Reset behavior
+* APB write transactions
+* APB read transactions
+* DATA register operation
+* DIR register operation
+* GPIO output behavior
+* GPIO output enable behavior
+* SET operation
+* CLR operation
+* TOGGLE operation
+* Interrupt enable register
+* Interrupt type register
+* Level-triggered interrupt
+* Edge-triggered interrupt
+* Interrupt status clearing
+* Interrupt masking
+* Invalid address detection
+* Unaligned address detection
+* PSLVERR behavior
+* PREADY behavior
+
+7. Expected Result
+
+The final design shall provide a functional parameterized APB GPIO controller with GPIO control and interrupt support.
+
+The design shall successfully pass all directed functional test cases implemented in the verification testbench.

@@ -1,0 +1,446 @@
+Release 14.7 - xst P.20131013 (lin64)
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+--> 
+Parameter TMPDIR set to xst/projnav.tmp
+
+
+Total REAL time to Xst completion: 0.00 secs
+Total CPU time to Xst completion: 0.02 secs
+ 
+--> 
+Parameter xsthdpdir set to xst
+
+
+Total REAL time to Xst completion: 0.00 secs
+Total CPU time to Xst completion: 0.02 secs
+ 
+--> 
+Reading design: apb_gpio.prj
+
+TABLE OF CONTENTS
+  1) Synthesis Options Summary
+  2) HDL Parsing
+  3) HDL Elaboration
+  4) HDL Synthesis
+       4.1) HDL Synthesis Report
+  5) Advanced HDL Synthesis
+       5.1) Advanced HDL Synthesis Report
+  6) Low Level Synthesis
+  7) Partition Report
+  8) Design Summary
+       8.1) Primitive and Black Box Usage
+       8.2) Device utilization summary
+       8.3) Partition Resource Summary
+       8.4) Timing Report
+            8.4.1) Clock Information
+            8.4.2) Asynchronous Control Signals Information
+            8.4.3) Timing Summary
+            8.4.4) Timing Details
+            8.4.5) Cross Clock Domains Report
+
+
+=========================================================================
+*                      Synthesis Options Summary                        *
+=========================================================================
+---- Source Parameters
+Input File Name                    : "apb_gpio.prj"
+Ignore Synthesis Constraint File   : NO
+
+---- Target Parameters
+Output File Name                   : "apb_gpio"
+Output Format                      : NGC
+Target Device                      : xc7a100t-3-csg324
+
+---- Source Options
+Top Module Name                    : apb_gpio
+Automatic FSM Extraction           : YES
+FSM Encoding Algorithm             : Auto
+Safe Implementation                : No
+FSM Style                          : LUT
+RAM Extraction                     : Yes
+RAM Style                          : Auto
+ROM Extraction                     : Yes
+Shift Register Extraction          : YES
+ROM Style                          : Auto
+Resource Sharing                   : YES
+Asynchronous To Synchronous        : NO
+Shift Register Minimum Size        : 2
+Use DSP Block                      : Auto
+Automatic Register Balancing       : No
+
+---- Target Options
+LUT Combining                      : Auto
+Reduce Control Sets                : Auto
+Add IO Buffers                     : YES
+Global Maximum Fanout              : 100000
+Add Generic Clock Buffer(BUFG)     : 32
+Register Duplication               : YES
+Optimize Instantiated Primitives   : NO
+Use Clock Enable                   : Auto
+Use Synchronous Set                : Auto
+Use Synchronous Reset              : Auto
+Pack IO Registers into IOBs        : Auto
+Equivalent register Removal        : YES
+
+---- General Options
+Optimization Goal                  : Speed
+Optimization Effort                : 1
+Power Reduction                    : NO
+Keep Hierarchy                     : No
+Netlist Hierarchy                  : As_Optimized
+RTL Output                         : Yes
+Global Optimization                : AllClockNets
+Read Cores                         : YES
+Write Timing Constraints           : NO
+Cross Clock Analysis               : NO
+Hierarchy Separator                : /
+Bus Delimiter                      : <>
+Case Specifier                     : Maintain
+Slice Utilization Ratio            : 100
+BRAM Utilization Ratio             : 100
+DSP48 Utilization Ratio            : 100
+Auto BRAM Packing                  : NO
+Slice Utilization Ratio Delta      : 5
+
+=========================================================================
+
+
+=========================================================================
+*                          HDL Parsing                                  *
+=========================================================================
+Analyzing Verilog file "/home/aditya/git_test/apb_gpio/rtl/apb_gpio.v" into library work
+Parsing module <apb_gpio>.
+
+=========================================================================
+*                            HDL Elaboration                            *
+=========================================================================
+
+Elaborating module <apb_gpio>.
+
+=========================================================================
+*                           HDL Synthesis                               *
+=========================================================================
+
+Synthesizing Unit <apb_gpio>.
+    Related source file is "/home/aditya/git_test/apb_gpio/rtl/apb_gpio.v".
+        GPIO_WIDTH = 32
+        ADDR_WIDTH = 8
+        DATA_WIDTH = 32
+    Found 32-bit register for signal <gpio_in_sync2>.
+    Found 32-bit register for signal <gpio_out>.
+    Found 32-bit register for signal <gpio_oe>.
+    Found 32-bit register for signal <gpio_int_en>.
+    Found 32-bit register for signal <gpio_int_type>.
+    Found 32-bit register for signal <gpio_int_status>.
+    Found 32-bit register for signal <gpio_in_sync1>.
+    Found 32-bit 7-to-1 multiplexer for signal <_n0165> created at line 28.
+    Summary:
+	inferred 224 D-type flip-flop(s).
+	inferred   6 Multiplexer(s).
+Unit <apb_gpio> synthesized.
+
+=========================================================================
+HDL Synthesis Report
+
+Macro Statistics
+# Registers                                            : 7
+ 32-bit register                                       : 7
+# Multiplexers                                         : 6
+ 32-bit 2-to-1 multiplexer                             : 5
+ 32-bit 7-to-1 multiplexer                             : 1
+# Xors                                                 : 2
+ 32-bit xor2                                           : 2
+
+=========================================================================
+
+=========================================================================
+*                       Advanced HDL Synthesis                          *
+=========================================================================
+
+
+=========================================================================
+Advanced HDL Synthesis Report
+
+Macro Statistics
+# Registers                                            : 224
+ Flip-Flops                                            : 224
+# Multiplexers                                         : 37
+ 1-bit 7-to-1 multiplexer                              : 32
+ 32-bit 2-to-1 multiplexer                             : 5
+# Xors                                                 : 2
+ 32-bit xor2                                           : 2
+
+=========================================================================
+
+=========================================================================
+*                         Low Level Synthesis                           *
+=========================================================================
+
+Optimizing unit <apb_gpio> ...
+
+Mapping all equations...
+Building and optimizing final netlist ...
+Found area constraint ratio of 100 (+ 5) on block apb_gpio, actual ratio is 0.
+FlipFlop gpio_dir_31 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_30 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_29 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_28 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_27 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_26 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_25 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_24 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_23 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_22 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_21 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_20 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_19 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_18 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_17 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_16 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_15 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_14 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_13 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_12 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_11 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_10 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_9 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_8 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_7 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_6 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_5 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_4 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_3 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_2 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_1 has been replicated 1 time(s) to handle iob=true attribute.
+FlipFlop gpio_dir_0 has been replicated 1 time(s) to handle iob=true attribute.
+
+Final Macro Processing ...
+
+=========================================================================
+Final Register Report
+
+Macro Statistics
+# Registers                                            : 256
+ Flip-Flops                                            : 256
+
+=========================================================================
+
+=========================================================================
+*                           Partition Report                            *
+=========================================================================
+
+Partition Implementation Status
+-------------------------------
+
+  No Partitions were found in this design.
+
+-------------------------------
+
+=========================================================================
+*                            Design Summary                             *
+=========================================================================
+
+Top Level Output File Name         : apb_gpio.ngc
+
+Primitive and Black Box Usage:
+------------------------------
+# BELS                             : 183
+#      INV                         : 1
+#      LUT3                        : 31
+#      LUT4                        : 1
+#      LUT5                        : 71
+#      LUT6                        : 77
+#      MUXF7                       : 1
+#      VCC                         : 1
+# FlipFlops/Latches                : 256
+#      FDC                         : 96
+#      FDCE                        : 160
+# Clock Buffers                    : 1
+#      BUFGP                       : 1
+# IO Buffers                       : 175
+#      IBUF                        : 76
+#      OBUF                        : 99
+
+Device utilization summary:
+---------------------------
+
+Selected Device : 7a100tcsg324-3 
+
+
+Slice Logic Utilization: 
+ Number of Slice Registers:             224  out of  126800     0%  
+ Number of Slice LUTs:                  181  out of  63400     0%  
+    Number used as Logic:               181  out of  63400     0%  
+
+Slice Logic Distribution: 
+ Number of LUT Flip Flop pairs used:    262
+   Number with an unused Flip Flop:      38  out of    262    14%  
+   Number with an unused LUT:            81  out of    262    30%  
+   Number of fully used LUT-FF pairs:   143  out of    262    54%  
+   Number of unique control sets:         5
+
+IO Utilization: 
+ Number of IOs:                         176
+ Number of bonded IOBs:                 176  out of    210    83%  
+    IOB Flip Flops/Latches:              32
+
+Specific Feature Utilization:
+ Number of BUFG/BUFGCTRLs:                1  out of     32     3%  
+
+---------------------------
+Partition Resource Summary:
+---------------------------
+
+  No Partitions were found in this design.
+
+---------------------------
+
+
+=========================================================================
+Timing Report
+
+NOTE: THESE TIMING NUMBERS ARE ONLY A SYNTHESIS ESTIMATE.
+      FOR ACCURATE TIMING INFORMATION PLEASE REFER TO THE TRACE REPORT
+      GENERATED AFTER PLACE-and-ROUTE.
+
+Clock Information:
+------------------
+-----------------------------------+------------------------+-------+
+Clock Signal                       | Clock buffer(FF name)  | Load  |
+-----------------------------------+------------------------+-------+
+PCLK                               | BUFGP                  | 256   |
+-----------------------------------+------------------------+-------+
+
+Asynchronous Control Signals Information:
+----------------------------------------
+No asynchronous control signals found in this design
+
+Timing Summary:
+---------------
+Speed Grade: -3
+
+   Minimum period: 1.022ns (Maximum Frequency: 978.186MHz)
+   Minimum input arrival time before clock: 3.202ns
+   Maximum output required time after clock: 2.623ns
+   Maximum combinational path delay: 2.248ns
+
+Timing Details:
+---------------
+All values displayed in nanoseconds (ns)
+
+=========================================================================
+Timing constraint: Default period analysis for Clock 'PCLK'
+  Clock period: 1.022ns (frequency: 978.186MHz)
+  Total number of paths / destination ports: 192 / 96
+-------------------------------------------------------------------------
+Delay:               1.022ns (Levels of Logic = 1)
+  Source:            gpio_in_sync2_0 (FF)
+  Destination:       gpio_int_status_0 (FF)
+  Source Clock:      PCLK rising
+  Destination Clock: PCLK rising
+
+  Data Path: gpio_in_sync2_0 to gpio_int_status_0
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     FDC:C->Q              1   0.361   0.556  gpio_in_sync2_0 (gpio_in_sync2_0)
+     LUT6:I2->O            1   0.097   0.000  gpio_int_status[31]_int_set_bits[31]_or_47_OUT<0>1 (gpio_int_status[31]_int_set_bits[31]_or_47_OUT<0>)
+     FDC:D                     0.008          gpio_int_status_0
+    ----------------------------------------
+    Total                      1.022ns (0.466ns logic, 0.556ns route)
+                                       (45.6% logic, 54.4% route)
+
+=========================================================================
+Timing constraint: Default OFFSET IN BEFORE for Clock 'PCLK'
+  Total number of paths / destination ports: 4032 / 640
+-------------------------------------------------------------------------
+Offset:              3.202ns (Levels of Logic = 5)
+  Source:            PADDR<0> (PAD)
+  Destination:       gpio_int_status_0 (FF)
+  Destination Clock: PCLK rising
+
+  Data Path: PADDR<0> to gpio_int_status_0
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     IBUF:I->O             3   0.001   0.693  PADDR_0_IBUF (PADDR_0_IBUF)
+     LUT5:I0->O           40   0.097   0.619  _n0138<7>1 (_n0138)
+     LUT6:I3->O            5   0.097   0.702  write_en1 (write_en)
+     LUT5:I0->O           32   0.097   0.790  int_status_write1 (int_status_write)
+     LUT6:I1->O            1   0.097   0.000  gpio_int_status[31]_int_set_bits[31]_or_47_OUT<0>1 (gpio_int_status[31]_int_set_bits[31]_or_47_OUT<0>)
+     FDC:D                     0.008          gpio_int_status_0
+    ----------------------------------------
+    Total                      3.202ns (0.397ns logic, 2.805ns route)
+                                       (12.4% logic, 87.6% route)
+
+=========================================================================
+Timing constraint: Default OFFSET OUT AFTER for Clock 'PCLK'
+  Total number of paths / destination ports: 288 / 97
+-------------------------------------------------------------------------
+Offset:              2.623ns (Levels of Logic = 4)
+  Source:            gpio_int_status_3 (FF)
+  Destination:       gpio_irq (PAD)
+  Source Clock:      PCLK rising
+
+  Data Path: gpio_int_status_3 to gpio_irq
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     FDC:C->Q              3   0.361   0.703  gpio_int_status_3 (gpio_int_status_3)
+     LUT6:I0->O            1   0.097   0.693  out3 (out2)
+     LUT6:I0->O            1   0.097   0.295  out14_SW0 (N2)
+     LUT6:I5->O            1   0.097   0.279  out14 (gpio_irq_OBUF)
+     OBUF:I->O                 0.000          gpio_irq_OBUF (gpio_irq)
+    ----------------------------------------
+    Total                      2.623ns (0.652ns logic, 1.971ns route)
+                                       (24.9% logic, 75.1% route)
+
+=========================================================================
+Timing constraint: Default path analysis
+  Total number of paths / destination ports: 365 / 33
+-------------------------------------------------------------------------
+Delay:               2.248ns (Levels of Logic = 5)
+  Source:            PADDR<0> (PAD)
+  Destination:       PRDATA<9> (PAD)
+
+  Data Path: PADDR<0> to PRDATA<9>
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     IBUF:I->O             3   0.001   0.693  PADDR_0_IBUF (PADDR_0_IBUF)
+     LUT5:I0->O           40   0.097   0.801  _n0138<7>1 (_n0138)
+     LUT6:I0->O            1   0.097   0.000  Mmux_PRDATA643_G (N5)
+     MUXF7:I1->O           1   0.279   0.279  Mmux_PRDATA643 (PRDATA_9_OBUF)
+     OBUF:I->O                 0.000          PRDATA_9_OBUF (PRDATA<9>)
+    ----------------------------------------
+    Total                      2.248ns (0.474ns logic, 1.774ns route)
+                                       (21.1% logic, 78.9% route)
+
+=========================================================================
+
+Cross Clock Domains Report:
+--------------------------
+
+Clock to Setup on destination clock PCLK
+---------------+---------+---------+---------+---------+
+               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
+Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
+---------------+---------+---------+---------+---------+
+PCLK           |    1.022|         |         |         |
+---------------+---------+---------+---------+---------+
+
+=========================================================================
+
+
+Total REAL time to Xst completion: 6.00 secs
+Total CPU time to Xst completion: 4.34 secs
+ 
+--> 
+
+
+Total memory usage is 490608 kilobytes
+
+Number of errors   :    0 (   0 filtered)
+Number of warnings :    0 (   0 filtered)
+Number of infos    :    0 (   0 filtered)
+

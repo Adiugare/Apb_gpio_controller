@@ -1,0 +1,313 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 08/31/2026 03:30:45 PM
+// Design Name: 
+// Module Name: apb_gpio_tb
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module apb_gpio_tb();
+
+	// GPIO PARAMETER
+	localparam GPIO_WIDTH = 32;
+
+	// APB PARAMETER 
+	localparam ADDR_WIDTH = 8;
+	localparam DATA_WIDTH = 32;
+	
+	// CLK PARAMETER
+	localparam CLK_PERIOD = 10;
+
+
+	// APB DUT SIGNALS 
+	reg 			PCLK;
+	reg 			PRESET_n;
+	reg 			PSEL;
+	reg 			PENABLE;
+	reg 			PWRITE;
+	reg [ADDR_WIDTH-1:0]	PADDR;
+	reg [DATA_WIDTH-1:0]    PWDATA;
+	
+	wire [DATA_WIDTH-1:0]	PRDATA;
+	wire 			PREADY;
+	wire			PSLVERR;
+
+
+	// GPIO DUT SIGNALS
+	reg [GPIO_WIDTH-1:0]	gpio_in;
+
+	wire [GPIO_WIDTH-1:0]	gpio_out;
+	wire [GPIO_WIDTH-1:0]	gpio_oe;
+	wire 			gpio_irq;
+
+	
+	// REGISTER ADDRESS MAPS
+	localparam [ADDR_WIDTH-1:0] ADDR_DATA		= 8'h00;
+	localparam [ADDR_WIDTH-1:0] ADDR_DIR		= 8'h04;
+	localparam [ADDR_WIDTH-1:0] ADDR_SET		= 8'h08;
+	localparam [ADDR_WIDTH-1:0] ADDR_CLR		= 8'h0c;
+	localparam [ADDR_WIDTH-1:0] ADDR_TOGGLE		= 8'h10;
+	localparam [ADDR_WIDTH-1:0] ADDR_INT_EN		= 8'h14;
+	localparam [ADDR_WIDTH-1:0] ADDR_INT_STATUS	= 8'h18;
+	localparam [ADDR_WIDTH-1:0] ADDR_INT_TYPE 	= 8'h1c;
+	localparam [ADDR_WIDTH-1:0] ADDR_BAD	 	= 8'h2c;
+	localparam [ADDR_WIDTH-1:0] ADDR_UNALIGNED 	= 8'h1c;
+
+
+	// PASS / FAIL CONDITIONS
+	
+	integer pass_count = 0;
+	integer fail_count = 0;
+
+
+	// DUT INSTANTIATION
+	
+	apb_gpio #(.GPIO_WIDTH(GPIO_WIDTH),.ADDR_WIDTH(ADDR_WIDTH),.DATA_WIDTH(DATA_WIDTH))
+		dut (.PCLK(PCLK),.PRESET_n(PRESET_n),.PSEL(PSEL),.PENABLE(PENABLE),.PWRITE(PWRITE),.PADDR(PADDR),.PWDATA(PWDATA),.PRDATA(PRDATA),
+			.PREADY(PREADY),.PSLVERR(PSLVERR),.gpio_in(gpio_in),.gpio_oe(gpio_oe),.gpio_out(gpio_out),.gpio_irq(gpio_irq));
+	
+	// CLK GENERATION
+	
+	initial PCLK = 0;
+	always #(CLK_PERIOD/2) PCLK = ~PCLK;
+
+		
+	// IDLE CONDITIONS
+
+	task apb_idle();
+		begin
+			{PSEL,PENABLE,PWRITE,PADDR,PWDATA} = 1'b0;
+			@(posedge PCLK);
+		end
+	endtask
+
+
+	// WRITE
+	
+	task apb_write(input [ADDR_WIDTH-1:0] addr, input [DATA_WIDTH-1:0] data);
+		begin
+			@(posedge PCLK);
+			PSEL = 1; PENABLE = 0; PWRITE = 1;
+			PADDR= addr; PWDATA = data;
+			@(posedge PCLK);
+			PENABLE = 1;				// ACCESS PHASE 
+			@(posedge PCLK);
+			PSEL = 0; PENABLE = 0;
+		end
+	endtask
+	
+
+	// READ 
+	
+	task apb_read(input [ADDR_WIDTH-1:0] addr,output [DATA_WIDTH-1:0] data);
+		begin
+			@(posedge PCLK);
+			PSEL = 1; PENABLE = 0; PWRITE = 0;
+			PADDR = addr;
+			@(posedge PCLK);
+			PENABLE = 1;
+			#1;
+			data = PRDATA;
+			@(posedge PCLK);
+			PSEL = 0; PENABLE = 0;
+		end
+	endtask
+
+
+	// CHECKER 
+	
+	task check(input [255:0] name, input [DATA_WIDTH-1:0] got, input [DATA_WIDTH-1:0] exp);
+		begin
+			if(got === exp)begin
+				pass_count = pass_count + 1;
+				$display("[PASS]%0s : got = 0x%08h exp = 0x%08h",name,got,exp);
+			end
+			else begin
+				fail_count = fail_count + 1;
+				$display("[FAIL]%0s : got = 0x%08h exp = 0x%07h",name,got,exp);
+			end
+		end
+	endtask
+
+
+	// TASK CHECK BITS
+	
+	task check_bits(input [255:0] name, input got, input exp);
+		begin
+			if(got === exp)begin
+				pass_count = pass_count + 1;
+				$display("[PASS]%0s: got=%0b exp=%0b",name,got,exp);
+			end
+			else begin
+				fail_count = fail_count + 1;
+				$display("[PASS]%0s: got=%0b exp=%0b",name,got,exp);
+			end
+		end
+	endtask
+
+	
+	// CATCHES WHATVER VALUE COMES FROM A READ, SO THE TEST CODE CAN THEN COMPATRE IT AGAINST WHAT'S EXPECTED
+	reg [DATA_WIDTH-1:0] rdata;
+
+	
+	// TEST CASES
+	
+	initial begin
+		apb_idle();
+		PRESET_n = 0; PSEL = 0; PENABLE = 0; PWRITE = 0; PADDR = 0; PWDATA = 0;
+		gpio_in = 32'h0;
+		repeat(3)
+			@(posedge PCLK);
+			PRESET_n = 1;
+			@(posedge PCLK);
+			
+
+			// TEST_1 RESET
+			apb_read(ADDR_DATA, rdata); check("T1 RESET DATA",rdata,32'h0);
+	       		apb_read(ADDR_DIR,rdata);   check("T1 RESET DIR",rdata,32'h0);
+			check_bits("T1 RESET gpio_irq",gpio_irq,1'b0);
+			
+
+			// TEST_2 DATA WRITE/READ + GPIO_OUT
+			apb_write(ADDR_DATA,32'hA5A5_A5A5);
+			apb_read(ADDR_DATA,rdata);
+			check("T2 DATA READBACK",rdata,32'hA5A5_A5A5);
+			#1 check("T2 gpio_out mirror DATA",gpio_out,32'hA5A5_A5A5);
+			
+
+			// TEST_3 DIR WRITE/READ + GPIO_OE
+			apb_write(ADDR_DIR,32'hFFFF_0000);
+			apb_read(ADDR_DIR,rdata);
+			check("T3 DIR READBACK",rdata,32'hFFFF_0000);
+			#1 check("T3 GPIO_OE mirror DIR",gpio_oe,32'hFFFF_0000);
+
+
+			// TEST_4 SET / CLR / TOGGLE
+		
+			// SET
+			apb_write(ADDR_DATA,32'h0);
+			apb_write(ADDR_SET,32'h0000_00FF);
+			apb_read(ADDR_DATA,rdata);
+			check("T4 SET LOW BYTE",rdata,32'h0000_00FF);
+			
+			// CLR
+			apb_write(ADDR_CLR,32'h0000_000F);
+			apb_read(ADDR_DATA,rdata);
+			check("T4 CLR NIBBLE",rdata,32'h0000_00F0);
+	
+			// TOGGLE
+			apb_write(ADDR_TOGGLE,32'h0000_00F0);
+			apb_read(ADDR_DATA,rdata);
+			check("T4 TOGGLE TO ZERO",rdata,32'h0000_0000);
+
+			// TEST_5 INT_EN / INT_TYPE WRITE/READ
+			// INT_EN
+
+			apb_write(ADDR_INT_EN,32'h1);
+			apb_read(ADDR_INT_EN,rdata);
+			check("T5 INT_EN READBACK",rdata,32'h1);
+
+			// INT_EN_TYPE
+			apb_write(ADDR_INT_TYPE,32'h0);
+			apb_read(ADDR_INT_TYPE,rdata);
+			check("T5 INT_TYPE READBACK",rdata,32'h0);
+
+			// TEST_6 LEVEL TRIGGER INTERRUPT
+			gpio_in[0] = 1'b1;
+			repeat(3)begin					// 2-FF SYNCHRONIZER SETTLE
+				@(posedge PCLK);
+				apb_read(ADDR_INT_STATUS,rdata);
+				check_bits("T6 LEVEL INT STATUS SET",rdata[0],1'b1);
+				check_bits("T6 gpio_irq ASSERTED",gpio_irq,1'b1);
+			end
+
+			gpio_in[0] = 1'b0;
+			repeat(3)begin					// RELEASE LEVEL FIRST
+				@(posedge PCLK);
+				apb_write(ADDR_INT_STATUS,32'h1);
+				apb_read(ADDR_INT_STATUS,rdata);	// CLEAR 1
+				check_bits("T6 LEVEL INT CLEARED",rdata[0],1'b0);
+				check_bits("T6 gpio_irq DEASSERTED",gpio_irq,1'b0);
+			end
+
+			// TEST_7 EDGE TRIGGER INTERRUPT
+			apb_write(ADDR_INT_TYPE,32'h1);
+			gpio_in[0] = 1'b1;
+			repeat(3)begin
+				@(posedge PCLK);
+				apb_read(ADDR_INT_STATUS,rdata);
+				check_bits("T7 EDGE INT STATUS SET",rdata[0],1'b1);
+			end
+
+
+			// TEST_8 CLEARS THE EDGE INTERRUPTS
+			apb_write(ADDR_INT_STATUS,32'h1);
+			apb_read(ADDR_INT_STATUS,rdata);
+			check_bits("T8 EDGE INT CLEARED BY CLEAR 1", rdata[0], 1'b0);
+        		check_bits("T8 gpio_irq deasserted", gpio_irq, 1'b0);
+
+			
+			// TEST_9 GPIO_IRQ MASKING VIA INT_EN
+			gpio_in[0] = 1'b0;				// ANOTHER EDGE SET'S STATUS
+			repeat(3)begin
+				@(posedge PCLK);
+				apb_write(ADDR_INT_EN,32'h0);		// DISABLE INTERRUPT
+				#1 check_bits("T9 IRQ MASKED WHEN INT_EN = 0",gpio_irq,1'b0);
+			end
+
+			// TEST_10 INVALID ADDRESS -> PSLVERR
+			@(posedge PCLK);
+		 	PSEL = 1; PENABLE = 0; PWRITE = 0; PADDR = ADDR_BAD;
+	       		@(posedge PCLK);
+			PENABLE = 1;
+			#1;
+			check_bits("T10 PSLVERR ON INVALID ADDRESS",PSLVERR,1'b1);
+			check_bits("T10 PREADY STILL 1",PREADY,1'b1);
+			@(posedge PCLK); 
+			PSEL = 0; PENABLE = 0;
+
+			// TEST_11 UNALLIGNED ADDRESS -> PSLVERR	
+			@(posedge PCLK);
+			PSEL = 1; PENABLE = 0; PWRITE = 0; PADDR = ADDR_UNALIGNED;
+			@(posedge PCLK);
+			PENABLE = 1;
+			#1;
+			check_bits("T11 PSLVERR ON UNALIGNED ADDRESS",PSLVERR,1'b1);
+			@(posedge PCLK);
+			PSEL = 0; PENABLE = 0;
+
+			// TEST_12 VALID ADDRESS -> NO PSLVERR
+			@(posedge PCLK);
+			PSEL = 1; PENABLE = 0; PWRITE = 0; PADDR = ADDR_DATA;
+			@(posedge PCLK);
+			PENABLE = 1;
+			#1;
+			check_bits("T12 NO PSLVERR ON VALID ADDRESS",PSLVERR,1'b0);
+
+			
+			// SUMMARY 
+			@(posedge PCLK);
+			if(fail_count == 0)
+				$display("RESULT: ALL TEST PASSED");
+			else
+				$display("RESULT: SOME TEST FAILED");
+				
+			
+			#2000 $finish;
+	end
+	
+endmodule

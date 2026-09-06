@@ -1,0 +1,216 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 08/28/2026 12:32:37 PM
+// Design Name: 
+// Module Name: apb_gpio
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+//**************************************** APB GPIO ********************************************//	
+
+
+module apb_gpio #(
+
+	// GPIO PARAMETER
+	parameter GPIO_WIDTH = 32,
+
+	// APB PARAMETERS
+	parameter ADDR_WIDTH = 8,
+	parameter DATA_WIDTH = 32
+	)(
+
+	//------------ APB INTERFACE --------------
+	// APB INPUTS
+	
+	input 			PCLK,
+	input 			PRESET_n,
+	input 			PSEL,
+	input 			PENABLE,
+	input 			PWRITE,
+	input [ADDR_WIDTH-1:0] 	PADDR,
+	input [DATA_WIDTH-1:0]  PWDATA,
+
+	
+	// APB OUTPUTS
+
+	output reg [DATA_WIDTH-1:0]  PRDATA,
+	output 			PREADY,
+	output reg 		PSLVERR,
+	
+
+	//------------ GPIO INTERFACE -------------
+	// GPIO INPUTS
+	input [GPIO_WIDTH-1:0] 	gpio_in,
+	
+	// GPIO OUTPUTS
+	
+	output [GPIO_WIDTH-1:0]	gpio_out,
+	output [GPIO_WIDTH-1:0] gpio_oe,
+	output 			gpio_irq
+	);
+
+
+	// ----------- REGISTER ADDRESS MAP -----------
+	
+	localparam [ADDR_WIDTH-1:0] ADDR_DATA		= 8'h00;
+	localparam [ADDR_WIDTH-1:0] ADDR_DIR		= 8'h04;
+	localparam [ADDR_WIDTH-1:0] ADDR_SET		= 8'h08;
+	localparam [ADDR_WIDTH-1:0] ADDR_CLR		= 8'h0c;
+	localparam [ADDR_WIDTH-1:0] ADDR_TOGGLE		= 8'h10;
+	localparam [ADDR_WIDTH-1:0] ADDR_INT_EN		= 8'h14;
+	localparam [ADDR_WIDTH-1:0] ADDR_INT_STATUS	= 8'h18;
+	localparam [ADDR_WIDTH-1:0] ADDR_INT_TYPE 	= 8'h1c;
+
+	// ------------ INTERNAL REGISTERS ------------
+	
+	reg [GPIO_WIDTH-1:0] gpio_data;		// OUTPUT DATA
+	reg [GPIO_WIDTH-1:0] gpio_dir;		// 0 = INPUT, 1 = OUTPUT
+	reg [GPIO_WIDTH-1:0] gpio_int_en;
+	reg [GPIO_WIDTH-1:0] gpio_int_status;
+	reg [GPIO_WIDTH-1:0] gpio_int_type;	// 0 = LEVEL, 1 = EDGE
+
+
+	// ------------- PWDATA/PRDATA TRIMMED TO GPIO_WIDTH
+	
+	wire [GPIO_WIDTH-1:0] wdata_g = PWDATA [GPIO_WIDTH-1:0];
+
+	// ------------- ADDRESS / ACCESS CHECK 
+	
+	wire addr_aligned = (PADDR[1:0] == 2'b00);
+
+	wire addr_valid = addr_aligned && 
+		   			((PADDR == ADDR_DATA) 		||
+					 (PADDR == ADDR_DIR)  		||
+				     (PADDR == ADDR_SET)   		||
+				     (PADDR == ADDR_CLR)   		||
+					 (PADDR == ADDR_TOGGLE)		||		 
+					 (PADDR == ADDR_INT_EN) 	||
+				     (PADDR == ADDR_INT_STATUS)	||
+					 (PADDR == ADDR_INT_TYPE));
+
+	// ACCESS PHASE
+	wire access_phase 	= PSEL & PENABLE;
+	
+	// WRITE ENABLE
+	wire write_en		= access_phase & PWRITE & addr_valid;
+
+	// READ ENABLE
+	wire read_en		= access_phase & ~PWRITE & addr_valid;
+
+	
+	// ZERO WAIT STATE ALWAYS PREADY HIGH
+	
+	assign PREADY = 1'b1;
+
+
+	// ERROR ON INVALID ADDRESS DURING A VALID ACCESS PHASE
+	
+	always@(*)begin
+		PSLVERR = access_phase && !addr_valid;
+	end
+
+	
+	// ------------ INPUT SYNCHRONIZER (2-FF) 
+	
+	reg [GPIO_WIDTH-1:0] gpio_in_sync1, gpio_in_sync2;
+	
+	always@(posedge PCLK or negedge PRESET_n)begin
+		if(!PRESET_n)begin
+			gpio_in_sync1 <= {GPIO_WIDTH{1'b0}};
+			gpio_in_sync2 <= {GPIO_WIDTH{1'b0}};
+		end
+		else begin
+			gpio_in_sync1 <= gpio_in;
+			gpio_in_sync2 <= gpio_in_sync1;
+		end
+	end
+
+	wire [GPIO_WIDTH-1:0] gpio_edge	 = gpio_in_sync1 ^ gpio_in_sync2;	// ANY CHANGE
+	wire [GPIO_WIDTH-1:0] gpio_level = gpio_in_sync2; 			// CURRENT LEVEL
+
+
+	// WRITE LOGIC 
+	always@(posedge PCLK or negedge PRESET_n)begin
+		if(!PRESET_n)begin
+			gpio_data	    <= {GPIO_WIDTH{1'b0}};
+			gpio_dir	    <= {GPIO_WIDTH{1'b0}};
+			gpio_int_en	    <= {GPIO_WIDTH{1'b0}};
+			gpio_int_type	<= {GPIO_WIDTH{1'b0}};
+		end
+		else if(write_en)begin
+			case(PADDR)	
+				ADDR_DATA    :	gpio_data	<= wdata_g;
+				ADDR_SET     :  gpio_data	<= gpio_data | wdata_g;
+				ADDR_CLR     :	gpio_data	<= gpio_data & ~wdata_g;
+				ADDR_TOGGLE  :	gpio_data	<= gpio_data ^ wdata_g;
+				ADDR_DIR     :  gpio_dir	<= wdata_g;
+				ADDR_INT_EN  :	gpio_int_en	<= wdata_g;
+				ADDR_INT_TYPE:	gpio_int_type	<= wdata_g;
+				default	     : ;
+			endcase
+		end
+	end
+
+	// INTERRUPT STATUS
+	wire int_status_write = write_en && (PADDR == ADDR_INT_STATUS);
+
+	// BITS THAT SHOULD SET THIS CYCLE: EDGE TYPE THAT JUST TOGGLED,
+		// LEVEL-TYPE BITS WHOSE INPUT LEVEL IS CURRENTLY ACTIVE
+	wire [GPIO_WIDTH-1:0] int_set_bits = (gpio_int_type & gpio_edge) | (~gpio_int_type & gpio_level);
+
+	// BITS SOFTWARE IS TRYING TO SET CLEAR WHEN THE WRITE IS VALID
+	wire [GPIO_WIDTH-1:0] int_clr_bits = int_status_write ? wdata_g : {GPIO_WIDTH{1'b0}};
+
+	always@(posedge PCLK or negedge PRESET_n)begin
+		if(!PRESET_n)
+			gpio_int_status <= {GPIO_WIDTH{1'b0}};
+		else
+			// A BIT BEING SET THIS CYCLE ALWAYS WINS OVER A SAME CYNCLE CLEAR
+			gpio_int_status <= (gpio_int_status & (int_set_bits | ~int_clr_bits)) | int_set_bits;
+	end
+		
+	
+	// READ MUX 
+	always@(*)begin
+		case(PADDR)
+			ADDR_DATA	   : PRDATA = {{(32-GPIO_WIDTH){1'b0}},gpio_data};
+			ADDR_DIR	    : PRDATA = {{(32-GPIO_WIDTH){1'b0}},gpio_dir};
+			ADDR_INT_EN     : PRDATA = {{(32-GPIO_WIDTH){1'b0}},gpio_int_en};
+			ADDR_INT_STATUS : PRDATA = {{(32-GPIO_WIDTH){1'b0}},gpio_int_status};
+			ADDR_INT_TYPE   : PRDATA = {{(32-GPIO_WIDTH){1'b0}},gpio_int_type};
+			default         : PRDATA = 32'h0;
+		endcase
+	end
+
+
+	// GPIO PHYSICAL OUTPUTS
+	assign gpio_out = gpio_data;
+	assign gpio_oe  = gpio_dir;
+
+	// INTERRUPT OUTPUT 
+	assign gpio_irq = |(gpio_int_status & gpio_int_en);
+
+endmodule		
+			
+
+
+
+	
+
+
+
+		
